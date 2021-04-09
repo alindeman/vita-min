@@ -1,30 +1,72 @@
 require "rails_helper"
 
 RSpec.feature "a client on their portal" do
-  context "when a client has not yet completed onboarding and next step is a question" do
-    let(:client) { create :client, intake: (create :intake, preferred_name: "Katie", current_step: "/en/questions/asset-loss") }
+  context "when a client has not yet completed intake questions" do
+    let(:client) do
+      create :client,
+             intake: (create :intake, preferred_name: "Katie", current_step: "/en/questions/asset-loss"),
+             tax_returns: [create(:tax_return)]
+    end
     before do
       login_as client, scope: :client
     end
     scenario "linking to next step" do
       visit portal_root_path
       expect(page).to have_text "Welcome back Katie!"
+
+      # status
+      expect(page).not_to have_text "Answered initial tax questions"
+
+      # links
       expect(page).to have_link("Complete all tax questions", href: "/en/questions/asset-loss")
       expect(page).not_to have_link "Submit additional documents"
     end
   end
 
-  context "when a client has not yet completed onboarding and next step is documents" do
-    let(:client) { create :client, intake: (create :intake, preferred_name: "Randall", current_step: "/en/documents/overview") }
+  context "when a client has completed intake questions and has started but not finished uploading documents" do
+    let(:client) do
+      create :client,
+             intake: (create :intake, preferred_name: "Randall", current_step: "/en/documents/overview"),
+             tax_returns: [create(:tax_return)]
+    end
     before do
       login_as client, scope: :client
     end
     scenario "linking to next step" do
       visit portal_root_path
       expect(page).to have_text "Welcome back Randall!"
+
+      # status
+      expect(page).to have_text "Answered initial tax questions"
+
+      # links
       expect(page).to have_link("Submit remaining tax documents", href: "/en/documents/overview")
       expect(page).not_to have_link "Submit additional documents"
+    end
+  end
 
+  context "when a client has completed intake questions and reached the end of the document flow and is waiting for review" do
+    let(:client) do
+      create :client,
+             intake: (create :intake, preferred_name: "Randall", current_step: nil), # TODO: Talk with Shannon to see if this is a reliable way of seeing if intake flow is complete
+             tax_returns: [create(:tax_return, year: 2019, status: :intake_ready)] # TODO: complate_at: Date
+    end
+    before do
+      login_as client, scope: :client
+    end
+
+    scenario "waiting for review" do
+      visit portal_root_path
+      expect(page).to have_text "Welcome back Randall!"
+
+      # status
+      expect(page).to have_text "Answered initial tax questions"
+      expect(page).to have_text "Shared initial tax documents"
+      expect(page).to have_text "2019 Tax Return"
+
+      within "#tax-year-2019" do
+        expect(page).to have_text "Waiting on your tax team for initial review"
+      end
     end
   end
 
@@ -45,6 +87,7 @@ RSpec.feature "a client on their portal" do
       visit portal_root_path
       expect(page).to have_text "Welcome back Martha!"
 
+      # tax returns
       expect(page).to have_text "2019 tax return"
       expect(page).to have_text "2018 tax return"
       expect(page).to have_text "2017 tax return"

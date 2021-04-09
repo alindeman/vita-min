@@ -6,6 +6,12 @@
   <% if @current_step.present? %>
     <p><%= t(".heres_what_we_need") %></p>
     <div class="tax-return-status">
+      <% if @current_step.include?("/documents/") %>
+        <div class="">
+          <%= image_tag("icons/grey_check.svg", alt: "") %>
+          <%= t(".tax_returns.answered_questions") %>
+        </div>
+      <% end %>
       <div class="tax-return-status__row tax-return-status__with-alert">
         <%= image_tag("icons/exclamation.svg", alt: "") %>
         <% link_text = @current_step.include?("/documents/") ? t(".tax_returns.submit_additional_documents") : t(".tax_returns.answer_questions") %>
@@ -13,6 +19,14 @@
       </div>
     </div>
   <% else %>
+    <div class="">
+      <%= image_tag("icons/grey_check.svg", alt: "") %>
+      <%= t(".tax_returns.answered_questions") %>
+    </div>
+    <div class="">
+      <%= image_tag("icons/grey_check.svg", alt: "") %>
+      <%= t(".tax_returns.shared_documents") %>
+    </div>
 
     <% @tax_returns.each do |tax_return| %>
       <div class="tax-return-status" id=<%= "tax-year-#{tax_return.year}" %>>

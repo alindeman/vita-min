@@ -58,6 +58,7 @@ RSpec.describe Portal::PortalController, type: :controller do
 
         context "with current_step nil" do
           let(:client) { create :client, intake: (create :intake) }
+
           it "backfills onto intake" do
             get :home
             expect(client.reload.intake.current_step).to eq "/en/questions/asset-sale-loss"
